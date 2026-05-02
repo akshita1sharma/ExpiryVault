@@ -3,14 +3,10 @@ import AddItemForm from './AddItemForm'
 import { useState, useEffect } from 'react'
 import { supabase } from '../supabase'
 
-function Dashboard() {
+function Dashboard({ search, selectedCategory }) {
   const { isDark } = useTheme()
   const [items, setItems] = useState([])
   const [editingItem, setEditingItem] = useState(null)
-  const [search, setSearch] = useState('')
-  const [selectedCategory, setSelectedCategory] = useState('All')
-
-  const categories = ['All', 'Document', 'Medicine', 'Warranty', 'Subscription', 'Food', 'Other']
 
   const fetchItems = async () => {
     const { data, error } = await supabase
@@ -94,44 +90,6 @@ function Dashboard() {
       </p>
 
       <AddItemForm onItemAdded={fetchItems} />
-
-      {/* Search + Filter */}
-      <div className="flex flex-col md:flex-row gap-4 mb-6">
-        
-        {/* Search */}
-        <div className="flex-1 relative">
-          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-lg">🔍</span>
-          <input
-            type="text"
-            placeholder="Search items..."
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            className={`w-full pl-10 pr-4 py-3 rounded-xl border outline-none ${
-              isDark
-                ? 'bg-[#0f172a] border-blue-900 text-white placeholder-white/30'
-                : 'bg-white border-gray-300 text-black'
-            }`}
-          />
-        </div>
-
-        {/* Category Filter */}
-        <div className="flex gap-2 flex-wrap">
-          {categories.map(cat => (
-            <button
-              key={cat}
-              onClick={() => setSelectedCategory(cat)}
-              className={`px-3 py-2 rounded-xl text-sm font-bold transition-all ${
-                selectedCategory === cat
-                  ? 'bg-blue-600 text-white'
-                  : isDark
-                    ? 'bg-[#0f172a] border border-blue-900 text-white/50 hover:text-white'
-                    : 'bg-white border border-gray-300 text-gray-500 hover:text-black'
-              }`}>
-              {cat}
-            </button>
-          ))}
-        </div>
-      </div>
 
       {/* Results count */}
       <p className={`text-sm mb-4 ${isDark ? 'text-white/40' : 'text-gray-400'}`}>

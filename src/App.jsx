@@ -10,6 +10,8 @@ import Signup from './pages/Signup'
 function App() {
   const [session, setSession] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [search, setSearch] = useState('')
+  const [selectedCategory, setSelectedCategory] = useState('All')
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -36,8 +38,17 @@ function App() {
           <Route path="/" element={
             session ? (
               <>
-                <Navbar user={session.user} />
-                <Dashboard />
+                <Navbar
+                  user={session.user}
+                  search={search}
+                  setSearch={setSearch}
+                  selectedCategory={selectedCategory}
+                  setSelectedCategory={setSelectedCategory}
+                />
+                <Dashboard
+                  search={search}
+                  selectedCategory={selectedCategory}
+                />
               </>
             ) : (
               <Navigate to="/login" />
