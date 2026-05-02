@@ -7,6 +7,10 @@ function Dashboard() {
   const { isDark } = useTheme()
   const [items, setItems] = useState([])
   const [editingItem, setEditingItem] = useState(null)
+  const [search, setSearch] = useState('')
+  const [selectedCategory, setSelectedCategory] = useState('All')
+
+  const categories = ['All', 'Document', 'Medicine', 'Warranty', 'Subscription', 'Food', 'Other']
 
   const fetchItems = async () => {
     const { data, error } = await supabase
@@ -19,6 +23,12 @@ function Dashboard() {
   useEffect(() => {
     fetchItems()
   }, [])
+
+  const filteredItems = items.filter(item => {
+    const matchesSearch = item.name.toLowerCase().includes(search.toLowerCase())
+    const matchesCategory = selectedCategory === 'All' || item.category === selectedCategory
+    return matchesSearch && matchesCategory
+  })
 
   const getDaysLeft = (date) => {
     const today = new Date()
@@ -85,6 +95,49 @@ function Dashboard() {
 
       <AddItemForm onItemAdded={fetchItems} />
 
+      {/* Search + Filter */}
+      <div className="flex flex-col md:flex-row gap-4 mb-6">
+        
+        {/* Search */}
+        <div className="flex-1 relative">
+          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-lg">🔍</span>
+          <input
+            type="text"
+            placeholder="Search items..."
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            className={`w-full pl-10 pr-4 py-3 rounded-xl border outline-none ${
+              isDark
+                ? 'bg-[#0f172a] border-blue-900 text-white placeholder-white/30'
+                : 'bg-white border-gray-300 text-black'
+            }`}
+          />
+        </div>
+
+        {/* Category Filter */}
+        <div className="flex gap-2 flex-wrap">
+          {categories.map(cat => (
+            <button
+              key={cat}
+              onClick={() => setSelectedCategory(cat)}
+              className={`px-3 py-2 rounded-xl text-sm font-bold transition-all ${
+                selectedCategory === cat
+                  ? 'bg-blue-600 text-white'
+                  : isDark
+                    ? 'bg-[#0f172a] border border-blue-900 text-white/50 hover:text-white'
+                    : 'bg-white border border-gray-300 text-gray-500 hover:text-black'
+              }`}>
+              {cat}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Results count */}
+      <p className={`text-sm mb-4 ${isDark ? 'text-white/40' : 'text-gray-400'}`}>
+        Showing {filteredItems.length} of {items.length} items
+      </p>
+
       {/* Edit Modal */}
       {editingItem && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
@@ -127,14 +180,14 @@ function Dashboard() {
       )}
 
       {/* Items Grid */}
-      {items.length === 0 ? (
+      {filteredItems.length === 0 ? (
         <div className={`flex flex-col items-center justify-center mt-20 gap-4 ${isDark ? 'text-white/40' : 'text-gray-400'}`}>
           <span className="text-6xl">📭</span>
-          <p className="text-lg">No items yet — add your first one!</p>
+          <p className="text-lg">{search || selectedCategory !== 'All' ? 'No items match your search!' : 'No items yet — add your first one!'}</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {items.map(item => {
+          {filteredItems.map(item => {
             const days = getDaysLeft(item.expiry_date)
             const badge = getUrgencyBadge(days)
             return (
@@ -179,7 +232,7 @@ function Dashboard() {
                     <button
                       key={p}
                       onClick={() => handlePriorityChange(item.id, p)}
-                      className={`text-xs px-2 py-1 rounded-full font-bold transition-all duration-200 hover:scale-110 ${
+                      className={`text-xs px-2 py-1 rounded-full font-bold transition-all ${
                         (item.priority || 'low') === p
                           ? getPriorityStyle(p).color
                           : isDark ? 'bg-white/5 text-white/30' : 'bg-gray-100 text-gray-400'
@@ -192,12 +245,12 @@ function Dashboard() {
                 <div className="flex gap-2">
                   <button
                     onClick={() => setEditingItem(item)}
-                    className="flex-1 p-2 rounded-xl bg-blue-500/20 text-blue-400 hover:bg-blue-500/40 hover:scale-105 transition-all duration-200 text-sm font-bold">
+                    className="flex-1 p-2 rounded-xl bg-blue-500/20 text-blue-400 hover:bg-blue-500/40 text-sm font-bold transition-all">
                     ✏️ Edit
                   </button>
                   <button
                     onClick={() => handleDelete(item.id)}
-                    className="flex-1 p-2 rounded-xl bg-red-500/20 text-red-400 hover:bg-red-500/40 hover:scale-105 transition-all duration-200 text-sm font-bold">
+                    className="flex-1 p-2 rounded-xl bg-red-500/20 text-red-400 hover:bg-red-500/40 text-sm font-bold transition-all">
                     🗑️ Delete
                   </button>
                 </div>
