@@ -7,6 +7,7 @@ function Dashboard({ search, selectedCategory }) {
   const { isDark } = useTheme()
   const [items, setItems] = useState([])
   const [editingItem, setEditingItem] = useState(null)
+  const [activeFilter, setActiveFilter] = useState('all')
 
   const fetchItems = async () => {
     const { data, error } = await supabase
@@ -19,12 +20,6 @@ function Dashboard({ search, selectedCategory }) {
   useEffect(() => {
     fetchItems()
   }, [])
-
-  const filteredItems = items.filter(item => {
-    const matchesSearch = item.name.toLowerCase().includes(search.toLowerCase())
-    const matchesCategory = selectedCategory === 'All' || item.category === selectedCategory
-    return matchesSearch && matchesCategory
-  })
 
   const getDaysLeft = (date) => {
     const today = new Date()
@@ -79,6 +74,78 @@ function Dashboard({ search, selectedCategory }) {
     }
   }
 
+  // Stats
+  const totalItems = items.length
+  const expiringSoon = items.filter(i => {
+    const d = getDaysLeft(i.expiry_date)
+    return d > 0 && d <= 30
+  }).length
+  const expired = items.filter(i => getDaysLeft(i.expiry_date) <= 0).length
+  const safe = items.filter(i => getDaysLeft(i.expiry_date) > 30).length
+
+  // Filter by stat card
+  const statFilteredItems = items.filter(i => {
+    const d = getDaysLeft(i.expiry_date)
+    if (activeFilter === 'expiring') return d > 0 && d <= 30
+    if (activeFilter === 'expired') return d <= 0
+    if (activeFilter === 'safe') return d > 30
+    return true
+  })
+
+  // Apply search + category on top
+  const filteredItems = statFilteredItems.filter(item => {
+    const matchesSearch = item.name.toLowerCase().includes(search.toLowerCase())
+    const matchesCategory = selectedCategory === 'All' || item.category === selectedCategory
+    return matchesSearch && matchesCategory
+  })
+
+  const stats = [
+    {
+      key: 'all',
+      label: 'Total Items',
+      value: totalItems,
+      emoji: '📦',
+      sub: 'All tracked',
+      border: isDark ? 'border-blue-900' : 'border-gray-200',
+      valueColor: isDark ? 'text-white' : 'text-[#0a0f1e]',
+      subColor: 'text-blue-400',
+      activeBg: 'bg-blue-600/20 border-blue-500'
+    },
+    {
+      key: 'expiring',
+      label: 'Expiring Soon',
+      value: expiringSoon,
+      emoji: '⚠️',
+      sub: 'Within 30 days',
+      border: isDark ? 'border-yellow-900/50' : 'border-yellow-200',
+      valueColor: 'text-yellow-400',
+      subColor: 'text-yellow-400',
+      activeBg: 'bg-yellow-400/20 border-yellow-400'
+    },
+    {
+      key: 'expired',
+      label: 'Expired',
+      value: expired,
+      emoji: '🔴',
+      sub: 'Need attention',
+      border: isDark ? 'border-red-900/50' : 'border-red-200',
+      valueColor: 'text-red-400',
+      subColor: 'text-red-400',
+      activeBg: 'bg-red-500/20 border-red-500'
+    },
+    {
+      key: 'safe',
+      label: 'Safe',
+      value: safe,
+      emoji: '✅',
+      sub: 'All good',
+      border: isDark ? 'border-green-900/50' : 'border-green-200',
+      valueColor: 'text-green-400',
+      subColor: 'text-green-400',
+      activeBg: 'bg-green-400/20 border-green-400'
+    }
+  ]
+
   return (
     <div className={`px-6 py-8 min-h-screen ${isDark ? 'bg-[#0a0f1e]' : 'bg-[#fefae0]'}`}>
 
@@ -90,58 +157,43 @@ function Dashboard({ search, selectedCategory }) {
       </p>
 
       {/* Stats Cards */}
-<div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-  
-  {/* Total Items */}
-  <div className={`p-4 rounded-2xl border ${isDark ? 'bg-[#0f172a] border-blue-900' : 'bg-white border-gray-200'}`}>
-    <p className={`text-sm mb-1 ${isDark ? 'text-white/40' : 'text-gray-400'}`}>Total Items</p>
-    <h2 className={`text-3xl font-black ${isDark ? 'text-white' : 'text-[#0a0f1e]'}`}>{items.length}</h2>
-    <p className="text-blue-400 text-xs mt-1">📦 All tracked</p>
-  </div>
-
-  {/* Expiring Soon */}
-  <div className={`p-4 rounded-2xl border ${isDark ? 'bg-[#0f172a] border-yellow-900/50' : 'bg-white border-yellow-200'}`}>
-    <p className={`text-sm mb-1 ${isDark ? 'text-white/40' : 'text-gray-400'}`}>Expiring Soon</p>
-    <h2 className="text-3xl font-black text-yellow-400">
-      {items.filter(i => {
-        const d = Math.ceil((new Date(i.expiry_date) - new Date()) / (1000 * 60 * 60 * 24))
-        return d > 0 && d <= 30
-      }).length}
-    </h2>
-    <p className="text-yellow-400 text-xs mt-1">⚠️ Within 30 days</p>
-  </div>
-
-  {/* Expired */}
-  <div className={`p-4 rounded-2xl border ${isDark ? 'bg-[#0f172a] border-red-900/50' : 'bg-white border-red-200'}`}>
-    <p className={`text-sm mb-1 ${isDark ? 'text-white/40' : 'text-gray-400'}`}>Expired</p>
-    <h2 className="text-3xl font-black text-red-400">
-      {items.filter(i => {
-        const d = Math.ceil((new Date(i.expiry_date) - new Date()) / (1000 * 60 * 60 * 24))
-        return d <= 0
-      }).length}
-    </h2>
-    <p className="text-red-400 text-xs mt-1">🔴 Need attention</p>
-  </div>
-
-  {/* Safe */}
-  <div className={`p-4 rounded-2xl border ${isDark ? 'bg-[#0f172a] border-green-900/50' : 'bg-white border-green-200'}`}>
-    <p className={`text-sm mb-1 ${isDark ? 'text-white/40' : 'text-gray-400'}`}>Safe</p>
-    <h2 className="text-3xl font-black text-green-400">
-      {items.filter(i => {
-        const d = Math.ceil((new Date(i.expiry_date) - new Date()) / (1000 * 60 * 60 * 24))
-        return d > 30
-      }).length}
-    </h2>
-    <p className="text-green-400 text-xs mt-1">✅ All good</p>
-  </div>
-
-</div>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+        {stats.map(stat => (
+          <button
+            key={stat.key}
+            onClick={() => setActiveFilter(activeFilter === stat.key ? 'all' : stat.key)}
+            className={`p-4 rounded-2xl border-2 text-left w-full
+              transition-all duration-300 ease-in-out
+              hover:-translate-y-1 hover:shadow-xl hover:scale-[1.03]
+              ${activeFilter === stat.key
+                ? stat.activeBg
+                : `${isDark ? 'bg-[#0f172a]' : 'bg-white'} ${stat.border}`
+              }`}>
+            <p className={`text-sm mb-1 ${isDark ? 'text-white/40' : 'text-gray-400'}`}>
+              {stat.label}
+            </p>
+            <h2 className={`text-3xl font-black ${stat.valueColor}`}>
+              {stat.value}
+            </h2>
+            <p className={`text-xs mt-1 ${stat.subColor}`}>
+              {stat.emoji} {stat.sub}
+            </p>
+          </button>
+        ))}
+      </div>
 
       <AddItemForm onItemAdded={fetchItems} />
 
       {/* Results count */}
       <p className={`text-sm mb-4 ${isDark ? 'text-white/40' : 'text-gray-400'}`}>
         Showing {filteredItems.length} of {items.length} items
+        {activeFilter !== 'all' && (
+          <button
+            onClick={() => setActiveFilter('all')}
+            className="ml-2 text-blue-400 hover:underline text-xs">
+            Clear filter ✕
+          </button>
+        )}
       </p>
 
       {/* Edit Modal */}
