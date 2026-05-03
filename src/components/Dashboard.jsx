@@ -89,6 +89,54 @@ function Dashboard({ search, selectedCategory }) {
         Track everything before it expires 🗄️
       </p>
 
+      {/* Stats Cards */}
+<div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+  
+  {/* Total Items */}
+  <div className={`p-4 rounded-2xl border ${isDark ? 'bg-[#0f172a] border-blue-900' : 'bg-white border-gray-200'}`}>
+    <p className={`text-sm mb-1 ${isDark ? 'text-white/40' : 'text-gray-400'}`}>Total Items</p>
+    <h2 className={`text-3xl font-black ${isDark ? 'text-white' : 'text-[#0a0f1e]'}`}>{items.length}</h2>
+    <p className="text-blue-400 text-xs mt-1">📦 All tracked</p>
+  </div>
+
+  {/* Expiring Soon */}
+  <div className={`p-4 rounded-2xl border ${isDark ? 'bg-[#0f172a] border-yellow-900/50' : 'bg-white border-yellow-200'}`}>
+    <p className={`text-sm mb-1 ${isDark ? 'text-white/40' : 'text-gray-400'}`}>Expiring Soon</p>
+    <h2 className="text-3xl font-black text-yellow-400">
+      {items.filter(i => {
+        const d = Math.ceil((new Date(i.expiry_date) - new Date()) / (1000 * 60 * 60 * 24))
+        return d > 0 && d <= 30
+      }).length}
+    </h2>
+    <p className="text-yellow-400 text-xs mt-1">⚠️ Within 30 days</p>
+  </div>
+
+  {/* Expired */}
+  <div className={`p-4 rounded-2xl border ${isDark ? 'bg-[#0f172a] border-red-900/50' : 'bg-white border-red-200'}`}>
+    <p className={`text-sm mb-1 ${isDark ? 'text-white/40' : 'text-gray-400'}`}>Expired</p>
+    <h2 className="text-3xl font-black text-red-400">
+      {items.filter(i => {
+        const d = Math.ceil((new Date(i.expiry_date) - new Date()) / (1000 * 60 * 60 * 24))
+        return d <= 0
+      }).length}
+    </h2>
+    <p className="text-red-400 text-xs mt-1">🔴 Need attention</p>
+  </div>
+
+  {/* Safe */}
+  <div className={`p-4 rounded-2xl border ${isDark ? 'bg-[#0f172a] border-green-900/50' : 'bg-white border-green-200'}`}>
+    <p className={`text-sm mb-1 ${isDark ? 'text-white/40' : 'text-gray-400'}`}>Safe</p>
+    <h2 className="text-3xl font-black text-green-400">
+      {items.filter(i => {
+        const d = Math.ceil((new Date(i.expiry_date) - new Date()) / (1000 * 60 * 60 * 24))
+        return d > 30
+      }).length}
+    </h2>
+    <p className="text-green-400 text-xs mt-1">✅ All good</p>
+  </div>
+
+</div>
+
       <AddItemForm onItemAdded={fetchItems} />
 
       {/* Results count */}
