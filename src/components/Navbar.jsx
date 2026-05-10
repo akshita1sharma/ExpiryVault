@@ -59,7 +59,7 @@ function Navbar({ user, search, setSearch, selectedCategory, setSelectedCategory
         {/* Center - Logo */}
         <div className="flex items-center gap-2 absolute left-1/2 transform -translate-x-1/2">
           <span className="text-xl">🗄️</span>
-          <span className={`text-lg font-bold ${isDark ? 'text-white' : 'text-[#0a0f1e]'}`}>ExpiryVault</span>
+          <span className={`text-lg font-bold ${isDark ? 'text-white' : 'text-[#0a0f1e]'}`}>Expire_X</span>
         </div>
 
         {/* Right - Actions */}
